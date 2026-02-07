@@ -4,129 +4,57 @@ FROM alpine:latest AS builder
 
 ARG TCL_BUILD_HOME=/opt/tcl_build
 
-# Install dependencies, download and install Tcl, and clean up in a single RUN command to reduce layers
+# ---- build dependencies ----
+RUN apk add --no-cache \
+    bash gcc musl-dev openssl openssl-dev build-base zlib-dev \
+    bsd-compat-headers unzip wget perl
+
+# ---- download Tcl ----
 RUN set -eux; \
-    apk add --no-cache \
-        bash gcc musl-dev openssl openssl-dev build-base zlib-dev bsd-compat-headers \
-        patch unzip wget; \
-    \
-    wget https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl903-src.zip -O tcl.zip; \
+    wget https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl903-src.zip -O /tmp/tcl.zip; \
     mkdir -p ${TCL_BUILD_HOME}/tcl; \
-    unzip tcl.zip -d ${TCL_BUILD_HOME}/tcl; \
-    \
-    # ---- Tcl 9: patch tclThreadAlloc.c to use system malloc/free/realloc ----
+    unzip /tmp/tcl.zip -d ${TCL_BUILD_HOME}/tcl
+
+# ---- force SYSTEM malloc in Tcl thread allocator ----
+RUN set -eux; \
     cd ${TCL_BUILD_HOME}/tcl/tcl9.0.3; \
-    cat > tcl9-system-malloc.patch <<'EOF'
---- generic/tclThreadAlloc.c-orig
-+++ generic/tclThreadAlloc.c
-@@ -297,7 +297,15 @@
-  *
-  *----------------------------------------------------------------------
-  */
--
-+#define SYSTEM_MALLOC 1
-+#if defined(SYSTEM_MALLOC)
-+void *
-+TclpAlloc(
-+    size_t numBytes)     /* Number of bytes to allocate. */
-+{
-+    return malloc(numBytes);
-+}
-+#else
- void *
- TclpAlloc(
-     size_t reqSize)
-@@ -345,6 +353,7 @@
-     }
-     return Block2Ptr(blockPtr, bucket, reqSize);
- }
-+#endif
-@@ -361,7 +370,15 @@
-  *
-  *----------------------------------------------------------------------
-  */
--
-+#if defined(SYSTEM_MALLOC)
-+void
-+TclpFree(
-+    void *ptr)         /* Pointer to memory to free. */
-+{
-+    free(ptr);
-+    return;
-+}
-+#else
- void
- TclpFree(
-     void *ptr)
-@@ -404,6 +421,7 @@
- 	PutBlocks(cachePtr, bucket, bucketInfo[bucket].numMove);
-     }
- }
-+#endif
-@@ -420,7 +438,15 @@
-  *
-  *----------------------------------------------------------------------
-  */
--
-+#if defined(SYSTEM_MALLOC)
-+void *
-+TclpRealloc(
-+    void *oldPtr,              /* Pointer to alloced block. */
-+    size_t numBytes)           /* New size of memory. */
-+{
-+    return realloc(oldPtr, numBytes);
-+}
-+#else
- void *
- TclpRealloc(
-     void *ptr,
-@@ -485,6 +511,7 @@
-     }
-     return newPtr;
- }
-+#endif
-EOF
-    ; \
-    # The "-orig" filename is just for patch context; create it from current file
-    cp generic/tclThreadAlloc.c generic/tclThreadAlloc.c-orig; \
-    patch -p0 < tcl9-system-malloc.patch; \
+    perl -0777 -i -pe ' \
+        s/\bvoid\s*\*\s*TclpAlloc\s*\(\s*size_t\s+\w+\s*\)\s*\{.*?\n\}/void *\nTclpAlloc(\n    size_t numBytes)\n{\n    return malloc(numBytes);\n}\n/sg; \
+        s/\bvoid\s*TclpFree\s*\(\s*void\s*\*\s*\w+\s*\)\s*\{.*?\n\}/void\nTclpFree(\n    void *ptr)\n{\n    free(ptr);\n    return;\n}\n/sg; \
+        s/\bvoid\s*\*\s*TclpRealloc\s*\(\s*void\s*\*\s*\w+\s*,\s*size_t\s+\w+\s*\)\s*\{.*?\n\}/void *\nTclpRealloc(\n    void *oldPtr,\n    size_t numBytes)\n{\n    return realloc(oldPtr, numBytes);\n}\n/sg' \
+        generic/tclThreadAlloc.c; \
     \
-    # ---- Build and install Tcl ----
+    grep -n "return malloc(numBytes);" generic/tclThreadAlloc.c; \
+    grep -n "free(ptr);" generic/tclThreadAlloc.c; \
+    grep -n "return realloc(oldPtr, numBytes);" generic/tclThreadAlloc.c
+
+# ---- build & install Tcl ----
+RUN set -eux; \
     cd ${TCL_BUILD_HOME}/tcl/tcl9.0.3/unix; \
     ./configure --enable-64bit; \
     make -j"$(nproc)"; \
     make install; \
-    \
-    # ---- Build and install Tcllib ----
-    wget https://github.com/tcltk/tcllib/archive/refs/tags/tcllib-2-0.zip -O tcllib-2-0.zip; \
-    mkdir -p ${TCL_BUILD_HOME}/tcllib; \
-    unzip tcllib-2-0.zip -d ${TCL_BUILD_HOME}/tcllib; \
-    cd ${TCL_BUILD_HOME}/tcllib/tcllib-tcllib-2-0/; \
-    ./configure; \
-    make install; \
-    \
-    cd /; \
-    rm -rf ${TCL_BUILD_HOME} tcl.zip /var/cache/apk/*
+    rm -rf ${TCL_BUILD_HOME} /tmp/tcl.zip /var/cache/apk/*
 
-# Stage 2: Final Image
+# =====================================================
+# Stage 2: Final runtime image
+# =====================================================
 FROM alpine:latest
 
 ARG BUILD_DATE
 
-LABEL org.opencontainers.image.title="Alpine Tcl/Tcllib Image"
-LABEL org.opencontainers.image.description="A custom Docker image with Alpine, Tcl 9.0.3, and Tcllib 2.0."
-LABEL org.opencontainers.image.version="1.4"
+LABEL org.opencontainers.image.title="Alpine Tcl (system malloc)"
+LABEL org.opencontainers.image.description="Alpine + Tcl 9.0.3 built with system malloc"
+LABEL org.opencontainers.image.version="9.0.3-sysmalloc"
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="admin@cloudz.cv"
 LABEL org.opencontainers.image.vendor="Cloudz"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.url="https://github.com/Siqsuruq/TclDocker/tree/main/AlpineTclBaseImage"
-LABEL org.opencontainers.image.documentation="https://github.com/Siqsuruq/TclDocker/tree/main/AlpineTclBaseImage"
-LABEL org.opencontainers.image.source="https://github.com/Siqsuruq/TclDocker/tree/main/AlpineTclBaseImage"
 
 COPY --from=builder /usr/local /usr/local
 
-RUN apk add --no-cache bash musl openssl zlib libpng rlwrap \
+RUN apk add --no-cache \
+        bash musl openssl zlib libpng rlwrap \
     && echo 'alias tclsh="rlwrap tclsh9.0"' >> /etc/profile \
     && rm -rf /var/cache/apk/*
 
