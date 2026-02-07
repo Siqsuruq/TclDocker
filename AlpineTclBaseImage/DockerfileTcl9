@@ -6,10 +6,10 @@ ARG TCL_BUILD_HOME=/opt/tcl_build
 
 # Install dependencies, download and install Tcl, and clean up in a single RUN command to reduce layers
 RUN apk add --no-cache bash gcc musl-dev openssl openssl-dev build-base zlib-dev bsd-compat-headers \
-    && wget https://sourceforge.net/projects/tcl/files/Tcl/9.0.2/tcl902-src.zip -O tcl.zip \
+    && wget https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl903-src.zip -O tcl.zip \
     && mkdir -p ${TCL_BUILD_HOME}/tcl \
     && unzip tcl.zip -d ${TCL_BUILD_HOME}/tcl \
-    && cd ${TCL_BUILD_HOME}/tcl/tcl9.0.2/unix \
+    && cd ${TCL_BUILD_HOME}/tcl/tcl9.0.3/unix \
     && ./configure --enable-64bit \
     && make \
     && make install \
@@ -30,8 +30,8 @@ ARG BUILD_DATE
 
 # Metadata using OCI Image Format Specification annotations
 LABEL org.opencontainers.image.title="Alpine Tcl/Tcllib Image"
-LABEL org.opencontainers.image.description="A custom Docker image with Alpine, Tcl 9.0.2, and Tcllib 2.0."
-LABEL org.opencontainers.image.version="1.3"
+LABEL org.opencontainers.image.description="A custom Docker image with Alpine, Tcl 9.0.3, and Tcllib 2.0."
+LABEL org.opencontainers.image.version="1.4"
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="admin@cloudz.cv"
 LABEL org.opencontainers.image.vendor="Cloudz"
