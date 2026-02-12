@@ -60,12 +60,29 @@ RUN set -eux; \
     make install; \
     rm -rf ${TCL_BUILD_HOME}/nsf
 
-# ---- Pure Tcl packages ----
+# ---- Pure Tcl packages (pinned releases) ----
+ARG HRFILESIZE_VER=2.4.0
+ARG MIMEXT_VER=1.2.0
+
 RUN set -eux; \
-    git clone --depth 1 https://github.com/Siqsuruq/mimext.git ${TCL_LIB}/mimext; \
-    rm -rf ${TCL_LIB}/mimext/.git; \
-    git clone --depth 1 https://github.com/Siqsuruq/hrfilesize.git ${TCL_LIB}/hrfilesize; \
-    rm -rf ${TCL_LIB}/hrfilesize/.git
+    mkdir -p "${TCL_LIB}"; \
+    \
+    # hrfilesize
+    curl -fsSL "https://github.com/Siqsuruq/hrfilesize/archive/refs/tags/v${HRFILESIZE_VER}.zip" -o /tmp/hrfilesize.zip; \
+    unzip -q /tmp/hrfilesize.zip -d /tmp; \
+    rm -rf "${TCL_LIB}/hrfilesize"; \
+    mv "/tmp/hrfilesize-${HRFILESIZE_VER}" "${TCL_LIB}/hrfilesize"; \
+    rm -f /tmp/hrfilesize.zip; \
+    \
+    # mimext
+    curl -fsSL "https://github.com/Siqsuruq/mimext/archive/refs/tags/v${MIMEXT_VER}.zip" -o /tmp/mimext.zip; \
+    unzip -q /tmp/mimext.zip -d /tmp; \
+    rm -rf "${TCL_LIB}/mimext"; \
+    mv "/tmp/mimext-${MIMEXT_VER}" "${TCL_LIB}/mimext"; \
+    rm -f /tmp/mimext.zip; \
+    \
+    # cleanup
+    rm -rf /tmp/hrfilesize-* /tmp/mimext-
 
 
 # ===============================
