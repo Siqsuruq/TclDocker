@@ -23,6 +23,10 @@ RUN set -eux; \
     curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_ZIP_VER}-src.zip" -o /tmp/tclsrc.zip; \
     unzip /tmp/tclsrc.zip -d ${TCL_BUILD_HOME}/tclsrc; \
     rm -f /tmp/tclsrc.zip
+
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tcl; \
+    ln -s ${TCL_BUILD_HOME}/tclsrc/tcl9.0.3 ${TCL_BUILD_HOME}/tcl/tcl9.0.3
 	
 # ---- tDOM ----
 RUN set -eux; \
