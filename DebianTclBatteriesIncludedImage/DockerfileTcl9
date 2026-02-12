@@ -1,0 +1,71 @@
+# ===============================
+# Stage 1: Builder
+# ===============================
+FROM siqsuruq/tcl:tcl9-debian AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TCL_BUILD_HOME=/opt/tcl_build
+ARG TCL_LIB=/usr/local/lib
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    zlib1g-dev \
+    libssl-dev \
+    libxml2-dev \
+    git \
+    curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- tDOM ----
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tdom; \
+    curl -fsSL https://tdom.org/downloads/tdom-0.9.6-src.zip -o /tmp/tdom.zip; \
+    unzip /tmp/tdom.zip -d ${TCL_BUILD_HOME}/tdom; \
+    cd ${TCL_BUILD_HOME}/tdom/tdom-0.9.6-src; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/tdom.zip ${TCL_BUILD_HOME}/tdom
+
+# ---- TclTLS ----
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tcltls; \
+    curl -fsSL https://core.tcl-lang.org/tcltls/zip/e19f6b3f18/tcltls-e19f6b3f18.zip -o /tmp/tcltls.zip; \
+    unzip /tmp/tcltls.zip -d ${TCL_BUILD_HOME}/tcltls; \
+    cd ${TCL_BUILD_HOME}/tcltls/tcltls-e19f6b3f18; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
+    make -j"$(nproc)"; \
+    make install-binaries install-libraries; \
+    rm -rf /tmp/tcltls.zip ${TCL_BUILD_HOME}/tcltls
+
+# ---- NSF/NX ----
+RUN set -eux; \
+    git clone https://github.com/nm-wu/nsf.git ${TCL_BUILD_HOME}/nsf; \
+    cd ${TCL_BUILD_HOME}/nsf; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf ${TCL_BUILD_HOME}/nsf
+
+# ---- Pure Tcl packages ----
+RUN set -eux; \
+    git clone https://github.com/Siqsuruq/mimext.git ${TCL_LIB}/mimext; \
+    git clone https://github.com/Siqsuruq/hrfilesize.git ${TCL_LIB}/hrfilesize
+
+# ===============================
+# Stage 2: Runtime
+# ===============================
+FROM siqsuruq/tcl:tcl9-debian
+
+ENV MALLOC_ARENA_MAX=2
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libxml2 \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local /usr/local
+
+RUN ldconfig
+
+CMD ["tclsh9.0"]
