@@ -1,0 +1,67 @@
+## Base Debian Image with Tcl and Tcllib
+FROM debian:bookworm-slim AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TCL_VER=9.0.3
+ARG TCL_BUILD_HOME=/opt/tcl_build
+ARG TCLLIB_TAG=tcllib-2-0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl unzip \
+    build-essential \
+    zlib1g-dev libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- Build Tcl
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tcl; \
+    curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_VER/./}-src.zip" -o /tmp/tcl.zip; \
+    unzip /tmp/tcl.zip -d ${TCL_BUILD_HOME}/tcl; \
+    cd ${TCL_BUILD_HOME}/tcl/tcl${TCL_VER}/unix; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -f /tmp/tcl.zip
+
+# ---- Install Tcllib (recommended way)
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tcllib; \
+    curl -fsSL "https://github.com/tcltk/tcllib/archive/refs/tags/${TCLLIB_TAG}.zip" -o /tmp/tcllib.zip; \
+    unzip /tmp/tcllib.zip -d ${TCL_BUILD_HOME}/tcllib; \
+    cd ${TCL_BUILD_HOME}/tcllib/tcllib-${TCLLIB_TAG}; \
+    tclsh ./installer.tcl -no-gui -no-html -no-nroff -no-wait -pkg-path /usr/local/lib; \
+    rm -f /tmp/tcllib.zip; \
+    rm -rf ${TCL_BUILD_HOME}
+
+# Stage 2: Final Image
+FROM debian:bookworm-slim
+
+ARG BUILD_DATE
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    zlib1g \
+    libssl3 \
+    rlwrap \
+    && rm -rf /var/lib/apt/lists/*
+
+LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
+      org.opencontainers.image.description="A custom Docker image with Debian, Tcl 9.0.3, and Tcllib 2.0." \
+      org.opencontainers.image.version="1.0" \
+      org.opencontainers.image.created=${BUILD_DATE} \
+      org.opencontainers.image.authors="admin@cloudz.cv" \
+      org.opencontainers.image.vendor="Cloudz" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.url="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
+      org.opencontainers.image.documentation="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
+      org.opencontainers.image.source="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage"
+
+ENV MALLOC_ARENA_MAX=2
+
+COPY --from=builder /usr/local /usr/local
+RUN ldconfig
+
+COPY .tclshrc /root/.tclshrc
+
+CMD ["rlwrap", "tclsh9.0"]
