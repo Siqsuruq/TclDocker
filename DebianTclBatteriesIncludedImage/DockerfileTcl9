@@ -3,6 +3,7 @@
 # ===============================
 FROM siqsuruq/tcl:tcl9-debian AS builder
 
+ARG TCL_VER=9.0.3
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TCL_BUILD_HOME=/opt/tcl_build
 ARG TCL_LIB=/usr/local/lib
@@ -16,6 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl unzip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tclsrc; \
+    TCL_ZIP_VER="$(printf '%s' "$TCL_VER" | tr -d '.')"; \
+    curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_ZIP_VER}-src.zip" -o /tmp/tclsrc.zip; \
+    unzip /tmp/tclsrc.zip -d ${TCL_BUILD_HOME}/tclsrc; \
+    rm -f /tmp/tclsrc.zip
+	
 # ---- tDOM ----
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tdom; \
@@ -42,10 +50,12 @@ RUN set -eux; \
 RUN set -eux; \
     git clone https://github.com/nm-wu/nsf.git ${TCL_BUILD_HOME}/nsf; \
     cd ${TCL_BUILD_HOME}/nsf; \
-    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit \
+        --with-tcl=${TCL_BUILD_HOME}/tclsrc/tcl${TCL_VER}/unix; \
     make -j"$(nproc)"; \
     make install; \
-    rm -rf ${TCL_BUILD_HOME}/nsf
+    rm -rf ${TCL_BUILD_HOME}/nsf ${TCL_BUILD_HOME}/tclsrc
+
 
 # ---- Pure Tcl packages ----
 RUN set -eux; \
