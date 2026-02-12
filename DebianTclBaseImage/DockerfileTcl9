@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---- Build Tcl
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tcl; \
-    curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_VER/./}-src.zip" -o /tmp/tcl.zip; \
+	TCL_ZIP_VER="$(printf '%s' "$TCL_VER" | tr -d '.')"; \
+	curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_ZIP_VER}-src.zip" -o /tmp/tcl.zip; \
     unzip /tmp/tcl.zip -d ${TCL_BUILD_HOME}/tcl; \
     cd ${TCL_BUILD_HOME}/tcl/tcl${TCL_VER}/unix; \
     ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
