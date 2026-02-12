@@ -23,16 +23,20 @@ RUN set -eux; \
     make -j"$(nproc)"; \
     make install; \
     rm -f /tmp/tcl.zip
-
+	
+RUN set -eux; \
+    ls -la /usr/local/bin; \
+    /usr/local/bin/tclsh9.0 <<< 'puts [info patchlevel]'
+	
 # ---- Install Tcllib (recommended way)
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tcllib; \
     curl -fsSL "https://github.com/tcltk/tcllib/archive/refs/tags/${TCLLIB_TAG}.zip" -o /tmp/tcllib.zip; \
     unzip /tmp/tcllib.zip -d ${TCL_BUILD_HOME}/tcllib; \
     cd ${TCL_BUILD_HOME}/tcllib/tcllib-${TCLLIB_TAG}; \
-    tclsh ./installer.tcl -no-gui -no-html -no-nroff -no-wait -pkg-path /usr/local/lib; \
-    rm -f /tmp/tcllib.zip; \
-    rm -rf ${TCL_BUILD_HOME}
+    /usr/local/bin/tclsh9.0 ./installer.tcl -no-gui -no-html -no-nroff -no-wait -pkg-path /usr/local/lib; \
+    rm -f /tmp/tcllib.zip;
+
 
 # Stage 2: Final Image
 FROM debian:bookworm-slim
