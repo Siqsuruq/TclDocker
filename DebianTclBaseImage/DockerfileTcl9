@@ -26,8 +26,8 @@ RUN set -eux; \
 	
 RUN set -eux; \
     ls -la /usr/local/bin; \
-    /usr/local/bin/tclsh9.0 <<< 'puts [info patchlevel]'
-	
+    echo 'puts [info patchlevel]' | /usr/local/bin/tclsh9.0
+
 # ---- Install Tcllib (recommended way)
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tcllib; \
@@ -36,7 +36,8 @@ RUN set -eux; \
     cd ${TCL_BUILD_HOME}/tcllib/tcllib-${TCLLIB_TAG}; \
     /usr/local/bin/tclsh9.0 ./installer.tcl -no-gui -no-html -no-nroff -no-wait -pkg-path /usr/local/lib; \
     rm -f /tmp/tcllib.zip;
-
+	
+RUN ln -sf /usr/local/bin/tclsh9.0 /usr/local/bin/tclsh
 
 # Stage 2: Final Image
 FROM debian:bookworm-slim
