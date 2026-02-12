@@ -26,7 +26,7 @@ RUN set -eux; \
 
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tcl; \
-    ln -s ${TCL_BUILD_HOME}/tclsrc/tcl9.0.3 ${TCL_BUILD_HOME}/tcl/tcl9.0.3
+    ln -s ${TCL_BUILD_HOME}/tclsrc/tcl${TCL_VER} ${TCL_BUILD_HOME}/tcl/tcl${TCL_VER}
 	
 # ---- tDOM ----
 RUN set -eux; \
@@ -55,16 +55,18 @@ RUN set -eux; \
     git clone https://github.com/nm-wu/nsf.git ${TCL_BUILD_HOME}/nsf; \
     cd ${TCL_BUILD_HOME}/nsf; \
     ./configure --prefix=/usr/local --enable-threads --enable-64bit \
-      --with-tcl=/usr/local/lib \
-      --with-tclsrcdir=${TCL_BUILD_HOME}/tclsrc/tcl9.0.3; \
+      --with-tcl=/usr/local/lib; \
     make -j"$(nproc)"; \
     make install; \
-    rm -rf ${TCL_BUILD_HOME}/nsf ${TCL_BUILD_HOME}/tclsrc
+    rm -rf ${TCL_BUILD_HOME}/nsf
 
 # ---- Pure Tcl packages ----
 RUN set -eux; \
-    git clone https://github.com/Siqsuruq/mimext.git ${TCL_LIB}/mimext; \
-    git clone https://github.com/Siqsuruq/hrfilesize.git ${TCL_LIB}/hrfilesize
+    git clone --depth 1 https://github.com/Siqsuruq/mimext.git ${TCL_LIB}/mimext; \
+    rm -rf ${TCL_LIB}/mimext/.git; \
+    git clone --depth 1 https://github.com/Siqsuruq/hrfilesize.git ${TCL_LIB}/hrfilesize; \
+    rm -rf ${TCL_LIB}/hrfilesize/.git
+
 
 # ===============================
 # Stage 2: Runtime
