@@ -83,7 +83,14 @@ RUN set -eux; \
     \
     # cleanup
     rm -rf /tmp/hrfilesize-* /tmp/mimext-
-	
+
+RUN set -eux; \
+    mkdir -p "${TCL_BUILD_HOME}/tzint"; \
+    curl -fsSL "https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz" \
+	  | tar -xz -C "${TCL_BUILD_HOME}/tzint" --strip-components=1; \
+    cp -r "${TCL_BUILD_HOME}/tzint" "${TCL_LIB}/"; \
+    rm -rf "${TCL_BUILD_HOME}/tzint"
+
 RUN set -eux; \
     mkdir -p "${TCL_BUILD_HOME}/money"; \
     curl -fsSL "https://github.com/Siqsuruq/money-tcl-package/archive/refs/tags/v1.0.2.tar.gz" \
