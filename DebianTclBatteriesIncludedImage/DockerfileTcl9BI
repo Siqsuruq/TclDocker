@@ -115,6 +115,7 @@ ENV MALLOC_ARENA_MAX=2
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
     libssl3 \
+	ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local /usr/local
