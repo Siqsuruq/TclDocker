@@ -43,7 +43,9 @@ RUN set -eux; \
 RUN set -eux; \
     git clone --depth 1 https://github.com/nm-wu/nsf.git "${TCL_BUILD_HOME}/nsf"; \
     cd "${TCL_BUILD_HOME}/nsf"; \
-    TCLCFG="$(tclsh9.0 -c 'puts [file dirname [info library]]')"; \
+    TCLCFG="$(find /usr/local -name tclConfig.sh -print -quit | xargs -r dirname)"; \
+    test -n "${TCLCFG}"; \
+    test -f "${TCLCFG}/tclConfig.sh"; \
     ./configure --prefix=/usr/local --enable-threads --enable-64bit --with-tcl="${TCLCFG}"; \
     make -j"$(nproc)"; \
     make install; \
