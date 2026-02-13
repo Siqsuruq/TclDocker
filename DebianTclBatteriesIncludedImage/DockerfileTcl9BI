@@ -17,6 +17,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl unzip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tclsrc; \
+    TCL_ZIP_VER="$(printf '%s' "$TCL_VER" | tr -d '.')"; \
+    curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_ZIP_VER}-src.zip" -o /tmp/tclsrc.zip; \
+    unzip /tmp/tclsrc.zip -d ${TCL_BUILD_HOME}/tclsrc; \
+    rm -f /tmp/tclsrc.zip
+
+RUN set -eux; \
+    mkdir -p ${TCL_BUILD_HOME}/tcl; \
+    ln -s ${TCL_BUILD_HOME}/tclsrc/tcl${TCL_VER} ${TCL_BUILD_HOME}/tcl/tcl${TCL_VER}
+
 # ---- tDOM ----
 RUN set -eux; \
     mkdir -p ${TCL_BUILD_HOME}/tdom; \
@@ -41,15 +52,13 @@ RUN set -eux; \
 
 # ---- NSF/NX ----
 RUN set -eux; \
-    git clone --depth 1 https://github.com/nm-wu/nsf.git "${TCL_BUILD_HOME}/nsf"; \
-    cd "${TCL_BUILD_HOME}/nsf"; \
-    TCLCFG="$(find /usr/local -name tclConfig.sh -print -quit | xargs -r dirname)"; \
-    test -n "${TCLCFG}"; \
-    test -f "${TCLCFG}/tclConfig.sh"; \
-    ./configure --prefix=/usr/local --enable-threads --enable-64bit --with-tcl="${TCLCFG}"; \
+    git clone https://github.com/nm-wu/nsf.git ${TCL_BUILD_HOME}/nsf; \
+    cd ${TCL_BUILD_HOME}/nsf; \
+    ./configure --prefix=/usr/local --enable-threads --enable-64bit \
+      --with-tcl=/usr/local/lib; \
     make -j"$(nproc)"; \
     make install; \
-    rm -rf "${TCL_BUILD_HOME}/nsf"
+    rm -rf ${TCL_BUILD_HOME}/nsf
 
 # ---- Pure Tcl packages (pinned releases) ----
 ARG HRFILESIZE_VER=2.4.0
