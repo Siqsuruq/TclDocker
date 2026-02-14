@@ -87,9 +87,13 @@ RUN set -eux; \
 RUN set -eux; \
     mkdir -p "${TCL_BUILD_HOME}/tzint"; \
     curl -fsSL "https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz" \
-	  | tar -xz -C "${TCL_BUILD_HOME}/tzint" --strip-components=1; \
-    cp -r "${TCL_BUILD_HOME}/tzint" "${TCL_LIB}/"; \
+      | tar -xz -C "${TCL_BUILD_HOME}/tzint" --strip-components=1; \
+    cd "${TCL_BUILD_HOME}/tzint"; \
+    ./configure --prefix=/usr/local --with-tcl=/usr/local/lib; \
+    make -j"$(nproc)"; \
+    make install; \
     rm -rf "${TCL_BUILD_HOME}/tzint"
+
 
 RUN set -eux; \
     mkdir -p "${TCL_BUILD_HOME}/money"; \
