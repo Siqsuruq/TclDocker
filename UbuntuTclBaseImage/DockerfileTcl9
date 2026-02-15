@@ -15,7 +15,7 @@ RUN ./configure --prefix=/opt/tcl9 --enable-shared && make -j$(nproc) && make in
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
-RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org \
+RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz \
     && tar -xf tcltls-2.0.tar.gz
 
 # Use a wildcard to enter whatever folder was extracted
