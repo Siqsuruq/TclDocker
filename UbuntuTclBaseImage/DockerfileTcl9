@@ -52,7 +52,7 @@ RUN wget -O ooxml1.10.tar.gz https://fossil.sowaswie.de/ooxml/uv/ooxml1.10.tar.g
     && tar -xf ooxml1.10.tar.gz \
     && rm ooxml1.10.tar.gz
 RUN mkdir -p /opt/tcl9/lib/ooxml \
-    && cp -r ooxml1.10/ooxml1.10/* /opt/tcl9/lib/ooxml/
+    && cp -r ooxml1.10/* /opt/tcl9/lib/ooxml/
 
 # --- Install Tcllib 2.0 (The Standard Library) ---
 WORKDIR /build/tcllib
