@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
     libssl-dev \
-    zlib1g-dev
+    zlib1g-dev \
+	git
 
 # --- Build Tcl 9.0.3 ---
 RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download \
@@ -37,11 +38,21 @@ RUN cd tdom-*/ && ./configure \
     && make -j$(nproc) \
     && make install
 
+# --- Build NSF (Next Scripting Framework) ---
+WORKDIR /build/nsf
+RUN git clone https://github.com/nm-wu/nsf.git
+
+WORKDIR /build/nsf
+# NSF requires autoconf to generate the configure script from git
+RUN autoconf
+RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --enable-64bit \
+    && make -j$(nproc) \
+    && make install
+
 # --- Install Tcllib 2.0 (The Standard Library) ---
 WORKDIR /build/tcllib
 RUN wget -O tcllib-2.0.tar.gz https://core.tcl-lang.org/tcllib/uv/tcllib-2.0.tar.gz \
     && tar -xf tcllib-2.0.tar.gz
-
 WORKDIR /build/tcllib/tcllib-2.0
 # Tcllib uses a 'tclsh' based installer
 RUN ./configure --prefix=/opt/tcl9 \
