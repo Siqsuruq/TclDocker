@@ -51,7 +51,7 @@ RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --enable-64bit \
 WORKDIR /build/tzint
 RUN wget -O tzint-1.2.tar.gz https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz \
     && tar -xf tzint-1.2.tar.gz
-WORKDIR /build/tzint-version-1.2
+WORKDIR /build/tzint/tzint-version-1.2
 RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --enable-64bit \
     && make -j$(nproc) \
     && make install
