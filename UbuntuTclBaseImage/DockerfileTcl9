@@ -83,14 +83,16 @@ RUN chisel cut --release ubuntu-24.04 --root /rootfs \
     ca-certificates_data \
     libc6_libs \
     libssl3t64_libs \
-    zlib1g_libs \
-	libpng16-16t64_libs \
-    libzint2.13_libs
+    zlib1g_libs
 
 # Stage 3: Final Image
 FROM scratch
 COPY --from=chiseller /rootfs /
 COPY --from=builder /opt/tcl9 /opt/tcl9
+
+# Manually copy the zint and png libraries that Chisel still doesnt exists
+COPY --from=builder /usr/lib/x86_64-linux-gnu/libzint.so* /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /usr/lib/x86_64-linux-gnu/libpng16.so* /usr/lib/x86_64-linux-gnu/
 
 # External mount point for user packages
 WORKDIR /external_libs
