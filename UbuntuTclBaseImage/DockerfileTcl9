@@ -9,17 +9,17 @@ RUN wget https://prdownloads.sourceforge.net \
 WORKDIR /tcl9.0.3/unix
 RUN ./configure --prefix=/opt/tcl9 && make -j$(nproc) && make install
 
-# Stage 2: Chisel the Ubuntu 24.04 base
+# Stage 2: Chisel the Ubuntu base
 FROM ubuntu:24.04 AS chiseller
 RUN apt-get update && apt-get install -y ca-certificates curl
 
-# Download the actual Chisel tool binary
+# Use the ACTUAL direct download link for the Chisel binary
 RUN curl -sSL https://github.com -o /tmp/chisel.tar.gz \
     && tar -xvf /tmp/chisel.tar.gz -C /usr/local/bin/ \
     && rm /tmp/chisel.tar.gz
 
 WORKDIR /rootfs
-# Explicitly point to the ubuntu-24.04 release branch
+# Cut the slices for Ubuntu 24.04
 RUN chisel cut --release ubuntu-24.04 --root /rootfs \
     base-files_base \
     base-files_release-info \
