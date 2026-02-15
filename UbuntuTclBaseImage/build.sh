@@ -19,12 +19,12 @@ docker build \
   -t "${IMAGE_NAME}:${TAG}" \
   .
 
-#echo "==> Tagging image..."
-#docker tag "${IMAGE_NAME}:${TAG}" "${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
-#docker tag "${IMAGE_NAME}:${TAG}" "${DOCKER_USER}/${IMAGE_NAME}:${VERSION}"
+echo "==> Tagging image..."
+docker tag "${IMAGE_NAME}:${TAG}" "${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
+docker tag "${IMAGE_NAME}:${TAG}" "${DOCKER_USER}/${IMAGE_NAME}:${VERSION}"
 
-#echo "==> Pushing to Docker Hub..."
-#docker push "${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
-#docker push "${DOCKER_USER}/${IMAGE_NAME}:${VERSION}"
+echo "==> Pushing to Docker Hub..."
+docker push "${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
+docker push "${DOCKER_USER}/${IMAGE_NAME}:${VERSION}"
 
 echo "==> Done."
