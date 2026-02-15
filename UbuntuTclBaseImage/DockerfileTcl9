@@ -37,6 +37,18 @@ RUN cd tdom-*/ && ./configure \
     && make -j$(nproc) \
     && make install
 
+# --- Install Tcllib 2.0 (The Standard Library) ---
+WORKDIR /build/tcllib
+RUN wget -O tcllib-2.0.tar.gz https://core.tcl-lang.org/tcllib/uv/tcllib-2.0.tar.gz \
+    && tar -xf tcllib-2.0.tar.gz
+
+WORKDIR /build/tcllib/tcllib-2.0
+# Tcllib uses a 'tclsh' based installer
+RUN ./configure --prefix=/opt/tcl9 \
+    && /opt/tcl9/bin/tclsh9.0 installer.tcl \
+       -pkg-path /opt/tcl9/lib \
+       -no-gui -no-wait -no-html
+
 # Stage 2: Chisel the Ubuntu 24.04 base
 FROM ubuntu:24.04 AS chiseller
 RUN apt-get update && apt-get install -y ca-certificates curl
@@ -63,4 +75,5 @@ COPY --from=builder /opt/tcl9 /opt/tcl9
 ENV PATH="/opt/tcl9/bin:${PATH}"
 ENV TCL_LIBRARY="/opt/tcl9/lib/tcl9.0"
 ENV TCLLIBPATH="/opt/tcl9/lib"
+ENV SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
 ENTRYPOINT ["tclsh9.0"]
