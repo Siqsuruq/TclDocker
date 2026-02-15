@@ -6,10 +6,9 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     zlib1g-dev
 
-# Updated link for version 9.0.3
+# --- Build Tcl 9.0.3 ---
 RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download \
     && tar -xf tcl9.0.3-src.tar.gz
-
 WORKDIR /tcl9.0.3/unix
 RUN ./configure --prefix=/opt/tcl9 --enable-64bit && make -j$(nproc) && make install
 
@@ -18,12 +17,20 @@ WORKDIR /build/tls
 RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz \
     && tar -xf tcltls-2.0.tar.gz \
 	&& rm tcltls-2.0.tar.gz
-
-# Use a wildcard to enter whatever folder was extracted
 RUN cd tcltls-* && ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --with-openssl-dir=/usr \
 	--with-openssl-includedir=/usr/include \
     --with-openssl-libdir=/usr/lib/x86_64-linux-gnu \
     && make \
+    && make install
+
+# --- Build tDOM 0.9.6 (XML/HTML Parser) ---
+WORKDIR /build/tdom
+RUN wget -O tdom-0.9.6.tgz http://tdom.org/downloads/tdom-0.9.6-src.tgz \
+    && tar -xf tdom-0.9.6.tgz
+WORKDIR /build/tdom/tdom-0.9.6-src/unix
+# Point to your Tcl 9 library so it picks up the 64-bit headers
+RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 \
+    && make -j$(nproc) \
     && make install
 
 # Stage 2: Chisel the Ubuntu 24.04 base
