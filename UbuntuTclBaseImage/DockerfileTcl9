@@ -3,7 +3,7 @@ FROM ubuntu:24.04 AS builder
 RUN apt-get update && apt-get install -y build-essential wget
 
 # Updated link for version 9.0.3
-RUN wget https://prdownloads.sourceforge.net \
+RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download \
     && tar -xf tcl9.0.3-src.tar.gz
 
 WORKDIR /tcl9.0.3/unix
