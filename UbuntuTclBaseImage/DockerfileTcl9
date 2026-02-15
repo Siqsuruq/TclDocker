@@ -11,7 +11,7 @@ RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9
     && tar -xf tcl9.0.3-src.tar.gz
 
 WORKDIR /tcl9.0.3/unix
-RUN ./configure --prefix=/opt/tcl9 --enable-shared && make -j$(nproc) && make install
+RUN ./configure --prefix=/opt/tcl9 --enable-64bit && make -j$(nproc) && make install
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
@@ -21,6 +21,8 @@ RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src
 
 # Use a wildcard to enter whatever folder was extracted
 RUN cd tcltls-* && ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --with-openssl-dir=/usr \
+	--with-openssl-includedir=/usr/include \
+    --with-openssl-libdir=/usr/lib/x86_64-linux-gnu \
     && make \
     && make install
 
