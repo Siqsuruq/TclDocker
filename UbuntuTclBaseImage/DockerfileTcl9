@@ -1,13 +1,17 @@
 # Stage 1: Build Tcl 9
 FROM ubuntu:24.04 AS builder
-RUN apt-get update && apt-get install -y build-essential wget
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    libssl-dev \
+    zlib1g-dev
 
 # Updated link for version 9.0.3
 RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download \
     && tar -xf tcl9.0.3-src.tar.gz
 
 WORKDIR /tcl9.0.3/unix
-RUN ./configure --prefix=/opt/tcl9 && make -j$(nproc) && make install
+RUN ./configure --prefix=/opt/tcl9 --enable-shared && make -j$(nproc) && make install
 
 # Stage 2: Chisel the Ubuntu 24.04 base
 FROM ubuntu:24.04 AS chiseller
