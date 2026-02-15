@@ -30,7 +30,7 @@ RUN wget -O tdom-0.9.6.tgz http://tdom.org/downloads/tdom-0.9.6-src.tgz \
     && rm tdom-0.9.6.tgz
 
 # Use a wildcard to enter the directory and then go into 'unix'
-RUN cd tdom-*/unix && ./configure \
+RUN cd tdom-*/ && ./configure \
     --with-tcl=/opt/tcl9/lib \
     --prefix=/opt/tcl9 \
     --enable-64bit \
