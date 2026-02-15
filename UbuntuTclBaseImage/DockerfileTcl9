@@ -13,14 +13,13 @@ RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9
 WORKDIR /tcl9.0.3/unix
 RUN ./configure --prefix=/opt/tcl9 --enable-shared && make -j$(nproc) && make install
 
-# --- Build TclTLS 2.0 (Native Tcl 9 version) ---
+# --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
-RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz \
+RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org \
     && tar -xf tcltls-2.0.tar.gz
 
-WORKDIR /build/tls/tcltls-2.0
-# We point specifically to our new Tcl 9 installation for headers
-RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --with-openssl-dir=/usr \
+# Use a wildcard to enter whatever folder was extracted
+RUN cd tcltls-* && ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --with-openssl-dir=/usr \
     && make \
     && make install
 
@@ -45,9 +44,9 @@ RUN chisel cut --release ubuntu-24.04 --root /rootfs \
 # Stage 3: Final Image
 FROM scratch
 COPY --from=chiseller /rootfs /
-# Ensure the entire /opt/tcl9 folder is copied, not just the bin
 COPY --from=builder /opt/tcl9 /opt/tcl9
 
 ENV PATH="/opt/tcl9/bin:${PATH}"
 ENV TCL_LIBRARY="/opt/tcl9/lib/tcl9.0"
+ENV TCLLIBPATH="/opt/tcl9/lib"
 ENTRYPOINT ["tclsh9.0"]
