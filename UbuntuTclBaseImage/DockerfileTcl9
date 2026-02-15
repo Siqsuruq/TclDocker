@@ -40,7 +40,7 @@ RUN cd tdom-*/ && ./configure \
 
 # --- Build NSF (Next Scripting Framework) ---
 WORKDIR /build/nsf
-RUN git clone https://github.com/nm-wu/nsf.git
+RUN git clone https://github.com/nm-wu/nsf.git .
 
 WORKDIR /build/nsf
 # NSF requires autoconf to generate the configure script from git
