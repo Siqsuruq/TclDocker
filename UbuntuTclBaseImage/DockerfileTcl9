@@ -13,6 +13,17 @@ RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9
 WORKDIR /tcl9.0.3/unix
 RUN ./configure --prefix=/opt/tcl9 --enable-shared && make -j$(nproc) && make install
 
+# --- Build TclTLS 2.0 (Native Tcl 9 version) ---
+WORKDIR /build/tls
+RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz \
+    && tar -xf tcltls-2.0.tar.gz
+
+WORKDIR /build/tls/tcltls-2.0
+# We point specifically to our new Tcl 9 installation for headers
+RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --with-openssl-dir=/usr \
+    && make \
+    && make install
+
 # Stage 2: Chisel the Ubuntu 24.04 base
 FROM ubuntu:24.04 AS chiseller
 RUN apt-get update && apt-get install -y ca-certificates curl
