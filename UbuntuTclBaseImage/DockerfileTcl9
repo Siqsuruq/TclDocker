@@ -88,8 +88,11 @@ FROM scratch
 COPY --from=chiseller /rootfs /
 COPY --from=builder /opt/tcl9 /opt/tcl9
 
+# External mount point for user packages
+WORKDIR /external_libs
+
 ENV PATH="/opt/tcl9/bin:${PATH}"
 ENV TCL_LIBRARY="/opt/tcl9/lib/tcl9.0"
-ENV TCLLIBPATH="/opt/tcl9/lib"
+ENV TCLLIBPATH="/external_libs /opt/tcl9/lib"
 ENV SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
 ENTRYPOINT ["tclsh9.0"]
