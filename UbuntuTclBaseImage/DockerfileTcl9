@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     libssl-dev \
     zlib1g-dev \
+	libpng-dev libzint-dev \
 	git
 
 # --- Build Tcl 9.0.3 ---
@@ -46,13 +47,14 @@ RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --enable-64bit \
     && make -j$(nproc) \
     && make install
 
-# --- Build OOXML ---
-WORKDIR /build/ooxml
-RUN wget -O ooxml1.10.tar.gz https://fossil.sowaswie.de/ooxml/uv/ooxml1.10.tar.gz \
-    && tar -xf ooxml1.10.tar.gz \
-    && rm ooxml1.10.tar.gz
-RUN mkdir -p /opt/tcl9/lib/ooxml \
-    && cp -r ooxml1.10/* /opt/tcl9/lib/ooxml/
+# --- Build tzint 1.2 ---
+WORKDIR /build/tzint
+RUN wget -O tzint-1.2.tar.gz https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz \
+    && tar -xf tzint-1.2.tar.gz
+WORKDIR /build/tzint-version-1.2
+RUN ./configure --with-tcl=/opt/tcl9/lib --prefix=/opt/tcl9 --enable-64bit \
+    && make -j$(nproc) \
+    && make install
 
 # --- Install Tcllib 2.0 (The Standard Library) ---
 WORKDIR /build/tcllib
@@ -81,7 +83,9 @@ RUN chisel cut --release ubuntu-24.04 --root /rootfs \
     ca-certificates_data \
     libc6_libs \
     libssl3t64_libs \
-    zlib1g_libs
+    zlib1g_libs \
+	libpng16-16t64_libs \
+    libzint2.13_libs
 
 # Stage 3: Final Image
 FROM scratch
