@@ -59,7 +59,7 @@ FROM debian:trixie-slim
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates zlib1g libssl3 libcrypto3 libpng16-16 libxml2-utils rlwrap \
+    ca-certificates zlib1g libssl3 libpng16-16 libxml2-utils rlwrap \
     && rm -rf /var/lib/apt/lists/*
 
 ENV MALLOC_ARENA_MAX=2
