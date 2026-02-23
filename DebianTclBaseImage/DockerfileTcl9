@@ -55,6 +55,9 @@ RUN ln -sf ${TCL_HOME}/bin/tclsh9.0 ${TCL_HOME}/bin/tclsh
 # Stage 2: Final Image
 # ===============================
 FROM debian:trixie-slim
+ARG TCL_HOME=/opt/tcl9
+ARG TCL_LIB_HOME=/opt/tcl9/lib
+ARG TCL_BIN_HOME=/opt/tcl9/bin
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -64,14 +67,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV MALLOC_ARENA_MAX=2
 
-COPY --from=builder /opt/tcl9 /opt/tcl9
-ENV PATH=/opt/tcl9/bin:$PATH
-RUN echo "/opt/tcl9/lib" > /etc/ld.so.conf.d/tcl9.conf && ldconfig
+COPY --from=builder ${TCL_HOME} ${TCL_HOME}
+ENV PATH=${TCL_BIN_HOME}:$PATH
+RUN echo ${TCL_LIB_HOME} > /etc/ld.so.conf.d/tcl9.conf && ldconfig
 
 # Directory for user-provided Tcl packages
 ENV TCL_EXTERNAL_LIBS=/external_libs
 RUN mkdir -p "$TCL_EXTERNAL_LIBS"
-ENV TCLLIBPATH="/external_libs ${TCLLIBPATH}"
+ENV TCLLIBPATH="/external_libs"
 
 CMD ["rlwrap", "tclsh"]
 
