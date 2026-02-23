@@ -1,71 +1,91 @@
-## Base Debian Image with Tcl and Tcllib
+# Base Debian Image with Tcl and Tcllib
+# ===============================
+# Stage 1: Build Tcl 9 and Tcllib
+# ===============================
 FROM debian:trixie-slim AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG TCL_VER=9.0.3
-ARG TCL_BUILD_HOME=/opt/tcl_build
-ARG TCLLIB_TAG=tcllib-2-0
+ARG TCL_HOME=/opt/tcl9
+ARG TCL_LIB_HOME=/opt/tcl9/lib
+ARG TCL_BIN_HOME=/opt/tcl9/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl unzip \
-    build-essential \
-    zlib1g-dev libssl-dev \
+    ca-certificates curl unzip wget build-essential zlib1g-dev libssl-dev \
+	git libpq-dev libpng-dev autoconf automake \
     && rm -rf /var/lib/apt/lists/*
 
-# ---- Build Tcl
-RUN set -eux; \
-    mkdir -p ${TCL_BUILD_HOME}/tcl; \
-	TCL_ZIP_VER="$(printf '%s' "$TCL_VER" | tr -d '.')"; \
-	curl -fsSL "https://sourceforge.net/projects/tcl/files/Tcl/${TCL_VER}/tcl${TCL_ZIP_VER}-src.zip" -o /tmp/tcl.zip; \
-    unzip /tmp/tcl.zip -d ${TCL_BUILD_HOME}/tcl; \
-    cd ${TCL_BUILD_HOME}/tcl/tcl${TCL_VER}/unix; \
-    ./configure --prefix=/usr/local --enable-threads --enable-64bit; \
-    make -j"$(nproc)"; \
-    make install; \
-    rm -f /tmp/tcl.zip
-	
-RUN set -eux; \
-    ls -la /usr/local/bin; \
-    echo 'puts [info patchlevel]' | /usr/local/bin/tclsh9.0
+# --- Build Tcl 9.0.3 ---
+WORKDIR /build/tcl
+RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download && tar -xf tcl9.0.3-src.tar.gz
+WORKDIR tcl9.0.3/unix
+RUN ./configure --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
 
-# ---- Install Tcllib (recommended way)
-RUN set -eux; \
-    mkdir -p ${TCL_BUILD_HOME}/tcllib; \
-    curl -fsSL "https://github.com/tcltk/tcllib/archive/refs/tags/${TCLLIB_TAG}.zip" -o /tmp/tcllib.zip; \
-    unzip /tmp/tcllib.zip -d ${TCL_BUILD_HOME}/tcllib; \
-    cd ${TCL_BUILD_HOME}/tcllib/tcllib-${TCLLIB_TAG}; \
-    /usr/local/bin/tclsh9.0 ./installer.tcl -no-gui -no-html -no-nroff -no-wait -pkg-path /usr/local/lib; \
-    rm -f /tmp/tcllib.zip;
-	
-RUN ln -sf /usr/local/bin/tclsh9.0 /usr/local/bin/tclsh
+# --- Build TclTLS 2.0 ---
+WORKDIR /build/tls
+RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz && tar -xf tcltls-2.0.tar.gz && rm tcltls-2.0.tar.gz
+RUN cd tcltls-* && ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --with-openssl-dir=/usr \
+	--with-openssl-includedir=/usr/include --with-openssl-libdir=/usr/lib/x86_64-linux-gnu && make && make install
 
+# --- Build tDOM 0.9.6 (XML/HTML Parser) ---
+WORKDIR /build/tdom
+RUN wget -O tdom-0.9.6.tgz http://tdom.org/downloads/tdom-0.9.6-src.tgz && tar -xf tdom-0.9.6.tgz && rm tdom-0.9.6.tgz
+RUN cd tdom-*/ && ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
+
+# --- Build NSF (Next Scripting Framework) ---
+WORKDIR /build/nsf
+RUN git clone https://github.com/nm-wu/nsf.git .
+RUN ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
+
+# --- Build tzint 1.2 ---
+WORKDIR /build/tzint
+RUN wget -O tzint-1.2.tar.gz https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz && tar -xf tzint-1.2.tar.gz
+WORKDIR /build/tzint/tzint-version-1.2
+RUN ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
+
+# --- Install Tcllib 2.0 (The Standard Library) ---
+WORKDIR /build/tcllib
+RUN wget -O tcllib-2.0.tar.gz https://core.tcl-lang.org/tcllib/uv/tcllib-2.0.tar.gz && tar -xf tcllib-2.0.tar.gz
+WORKDIR /build/tcllib/tcllib-2.0
+# Tcllib uses a 'tclsh' based installer
+RUN ./configure --prefix=${TCL_HOME} && ${TCL_BIN_HOME}/tclsh9.0 installer.tcl -pkg-path ${TCL_LIB_HOME} -no-gui -no-wait -no-html
+
+RUN ln -sf ${TCL_HOME}/bin/tclsh9.0 ${TCL_HOME}/bin/tclsh
+
+# ===============================
 # Stage 2: Final Image
+# ===============================
 FROM debian:trixie-slim
 
-ARG BUILD_DATE
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    zlib1g \
-    libssl3 \
-    rlwrap \
+    ca-certificates zlib1g libssl3 libcrypto3 libpng16-16 libxml2-utils rlwrap \
     && rm -rf /var/lib/apt/lists/*
-
-LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
-      org.opencontainers.image.description="A custom Docker image with Debian, Tcl 9.0.3, and Tcllib 2.0." \
-      org.opencontainers.image.version="1.0" \
-      org.opencontainers.image.created=${BUILD_DATE} \
-      org.opencontainers.image.authors="admin@cloudz.cv" \
-      org.opencontainers.image.vendor="Cloudz" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.url="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
-      org.opencontainers.image.documentation="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
-      org.opencontainers.image.source="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage"
 
 ENV MALLOC_ARENA_MAX=2
 
-COPY --from=builder /usr/local /usr/local
-RUN ldconfig
+COPY --from=builder /opt/tcl9 /opt/tcl9
+ENV PATH=/opt/tcl9/bin:$PATH
+RUN echo "/opt/tcl9/lib" > /etc/ld.so.conf.d/tcl9.conf && ldconfig
 
-CMD ["rlwrap", "tclsh9.0"]
+# Directory for user-provided Tcl packages
+ENV TCL_EXTERNAL_LIBS=/external_libs
+RUN mkdir -p "$TCL_EXTERNAL_LIBS"
+ENV TCLLIBPATH="/external_libs ${TCLLIBPATH}"
+
+CMD ["rlwrap", "tclsh"]
+
+# Metadata using OCI Image Format Specification annotations
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
+	org.opencontainers.image.description="A custom Docker image with Debian, Tcl 9.0.3, and Tcllib 2.0." \
+	org.opencontainers.image.version="1.0.3" \
+	org.opencontainers.image.created=${BUILD_DATE} \
+	org.opencontainers.image.revision=${VCS_REF} \
+	org.opencontainers.image.authors="admin@cloudz.cv" \
+	org.opencontainers.image.vendor="Cloudz" \
+	org.opencontainers.image.licenses="MIT" \
+	org.opencontainers.image.url="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
+	org.opencontainers.image.documentation="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage" \
+	org.opencontainers.image.source="https://github.com/Siqsuruq/TclDocker/tree/main/DebianTclBaseImage"
