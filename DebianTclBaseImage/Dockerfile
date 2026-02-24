@@ -1,23 +1,34 @@
 # Base Debian Image with Tcl and Tcllib
-# ===============================
-# Stage 1: Build Tcl 9 and Tcllib
-# ===============================
-FROM debian:trixie-slim AS builder
-
-ARG DEBIAN_FRONTEND=noninteractive
+# Global variables
 ARG TCL_HOME=/opt/tcl9
 ARG TCL_LIB_HOME=/opt/tcl9/lib
 ARG TCL_BIN_HOME=/opt/tcl9/bin
+ARG TCLSH=tclsh9.0
+ARG TCLVER=9.0.3
+ARG TCLSHORTVER=9.0
+
+# ===============================
+# Stage 1: Build Tcl and Tcllib
+# ===============================
+FROM debian:trixie-slim AS builder
+ARG TCL_HOME
+ARG TCL_LIB_HOME
+ARG TCL_BIN_HOME
+ARG TCLSH
+ARG TCLVER
+ARG TCLSHORTVER
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl unzip wget build-essential zlib1g-dev libssl-dev \
 	git libpq-dev libpng-dev autoconf automake \
     && rm -rf /var/lib/apt/lists/*
 
-# --- Build Tcl 9.0.3 ---
+# --- Build Tcl  ---
 WORKDIR /build/tcl
-RUN wget -O tcl9.0.3-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/9.0.3/tcl9.0.3-src.tar.gz/download && tar -xf tcl9.0.3-src.tar.gz
-WORKDIR tcl9.0.3/unix
+RUN wget -O tcl${TCLVER}-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/${TCLVER}/tcl${TCLVER}-src.tar.gz/download && tar -xf tcl${TCLVER}-src.tar.gz
+WORKDIR tcl${TCLVER}/unix
 RUN ./configure --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
 
 # --- Build TclTLS 2.0 ---
@@ -47,17 +58,20 @@ WORKDIR /build/tcllib
 RUN wget -O tcllib-2.0.tar.gz https://core.tcl-lang.org/tcllib/uv/tcllib-2.0.tar.gz && tar -xf tcllib-2.0.tar.gz
 WORKDIR /build/tcllib/tcllib-2.0
 # Tcllib uses a 'tclsh' based installer
-RUN ./configure --prefix=${TCL_HOME} && ${TCL_BIN_HOME}/tclsh9.0 installer.tcl -pkg-path ${TCL_LIB_HOME} -no-gui -no-wait -no-html
+RUN ./configure --prefix=${TCL_HOME} && ${TCL_BIN_HOME}/${TCLSH} installer.tcl -pkg-path ${TCL_LIB_HOME} -no-gui -no-wait -no-html
 
-RUN ln -sf ${TCL_HOME}/bin/tclsh9.0 ${TCL_HOME}/bin/tclsh
+RUN ln -sf ${TCL_HOME}/bin/${TCLSH} ${TCL_HOME}/bin/tclsh
 
 # ===============================
 # Stage 2: Final Image
 # ===============================
 FROM debian:trixie-slim
-ARG TCL_HOME=/opt/tcl9
-ARG TCL_LIB_HOME=/opt/tcl9/lib
-ARG TCL_BIN_HOME=/opt/tcl9/bin
+ARG TCL_HOME
+ARG TCL_LIB_HOME
+ARG TCL_BIN_HOME
+ARG TCLSH
+ARG TCLVER
+ARG TCLSHORTVER
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -69,7 +83,7 @@ ENV MALLOC_ARENA_MAX=2
 
 COPY --from=builder ${TCL_HOME} ${TCL_HOME}
 ENV PATH=${TCL_BIN_HOME}:$PATH
-RUN echo ${TCL_LIB_HOME} > /etc/ld.so.conf.d/tcl9.conf && ldconfig
+RUN echo ${TCL_LIB_HOME} > /etc/ld.so.conf.d/${TCLSHORTVER}.conf && ldconfig
 
 # Directory for user-provided Tcl packages
 ENV TCL_EXTERNAL_LIBS=/external_libs
@@ -82,7 +96,7 @@ CMD ["rlwrap", "tclsh"]
 ARG BUILD_DATE
 ARG VCS_REF
 LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
-	org.opencontainers.image.description="A custom Docker image with Debian, Tcl 9.0.3, and Tcllib 2.0." \
+	org.opencontainers.image.description="A custom Docker image with Debian, Tcl ${TCLVER}, and Tcllib 2.0." \
 	org.opencontainers.image.version="1.0.3" \
 	org.opencontainers.image.created=${BUILD_DATE} \
 	org.opencontainers.image.revision=${VCS_REF} \
