@@ -1,3 +1,0 @@
-# Display the version of Tcl on startup
-puts "Running Tcl version [info patchlevel]"
-
