@@ -87,4 +87,4 @@ To build an image:
 
 ## License
 
-MIT
+BSD 3
