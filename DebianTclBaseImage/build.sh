@@ -7,8 +7,8 @@ DOCKERFILE="Dockerfile"     # one Dockerfile for both
 DIST="debian"
 
 # ---- choose what to build ----
-TCLVER="9.0.3"             # e.g. 8.6.17 or 9.0.3
-TCLMAJOR="9"                # e.g. 8 or 9
+TCLVER="${TCLVER:-9.0.3}"	# e.g. 8.6.17 or 9.0.3
+TCLMAJOR="${TCLMAJOR:-${TCLVER%%.*}}"
 
 # derive tags
 TAG="tcl${TCLMAJOR}-${DIST}"        # moving tag: tcl8-debian
