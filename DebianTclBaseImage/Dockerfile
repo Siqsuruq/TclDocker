@@ -98,7 +98,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
 	org.opencontainers.image.description="A custom Docker image with Debian, Tcl ${TCLVER}, and Tcllib 2.0." \
-	org.opencontainers.image.version="1.0.3" \
+	org.opencontainers.image.version="1.0.4" \
 	org.opencontainers.image.created=${BUILD_DATE} \
 	org.opencontainers.image.revision=${VCS_REF} \
 	org.opencontainers.image.authors="admin@cloudz.cv" \
