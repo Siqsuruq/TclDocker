@@ -33,9 +33,10 @@ RUN ./configure --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make i
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
-RUN wget -O tcltls-2.0.1.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0.1-src.tar.gz && tar -xf tcltls-2.0.1.tar.gz && rm tcltls-2.0.1.tar.gz
-RUN cd tcltls-* && ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --with-openssl-dir=/usr \
+RUN wget -O tcltls2.0.1.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls2.0.1.tar.gz && tar -xf tcltls2.0.1.tar.gz && rm tcltls2.0.1.tar.gz
+RUN cd tcltls* && ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --with-openssl-dir=/usr \
 	--with-openssl-includedir=/usr/include --with-openssl-libdir=/usr/lib/x86_64-linux-gnu && make && make install
+
 
 # --- Build tDOM 0.9.6 (XML/HTML Parser) ---
 WORKDIR /build/tdom
