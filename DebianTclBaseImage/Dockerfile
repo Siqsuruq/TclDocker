@@ -4,7 +4,7 @@ ARG TCL_HOME=/opt/tcl9
 ARG TCL_LIB_HOME=/opt/tcl9/lib
 ARG TCL_BIN_HOME=/opt/tcl9/bin
 ARG TCLSH=tclsh9.0
-ARG TCLVER=9.0.3
+ARG TCLVER=9.0.4
 ARG TCLSHORTVER=9.0
 
 # ===============================
@@ -33,7 +33,7 @@ RUN ./configure --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make i
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
-RUN wget -O tcltls-2.0.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0-src.tar.gz && tar -xf tcltls-2.0.tar.gz && rm tcltls-2.0.tar.gz
+RUN wget -O tcltls-2.0.1.tar.gz https://core.tcl-lang.org/tcltls/uv/tcltls-2.0.1-src.tar.gz && tar -xf tcltls-2.0.1.tar.gz && rm tcltls-2.0.1.tar.gz
 RUN cd tcltls-* && ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --with-openssl-dir=/usr \
 	--with-openssl-includedir=/usr/include --with-openssl-libdir=/usr/lib/x86_64-linux-gnu && make && make install
 
