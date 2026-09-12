@@ -4,13 +4,13 @@ ARG TCL_HOME=/opt/tcl9
 ARG TCL_LIB_HOME=/opt/tcl9/lib
 ARG TCL_BIN_HOME=/opt/tcl9/bin
 ARG TCLSH=tclsh9.0
-ARG TCLVER=9.0.3
+ARG TCLVER=9.0.4
 ARG TCLSHORTVER=9.0
 
 # ===============================
 # Stage 1: Build Tcl and Tcllib
 # ===============================
-FROM alpine:3.23 AS builder
+FROM alpine:3.24 AS builder
 
 # Re-declare args in this stage
 ARG TCL_HOME
@@ -30,14 +30,14 @@ RUN apk add --no-cache \
 
 # --- Build Tcl ---
 WORKDIR /build/tcl
-RUN wget -O "tcl${TCLVER}-src.tar.gz" \
-      "https://sourceforge.net/projects/tcl/files/Tcl/${TCLVER}/tcl${TCLVER}-src.tar.gz/download" \
+RUN wget -O "tcl${TCLVER}-src.tar.gz" "https://sourceforge.net/projects/tcl/files/Tcl/${TCLVER}/tcl${TCLVER}-src.tar.gz/download" \
     && tar -xf "tcl${TCLVER}-src.tar.gz"
 
 WORKDIR "/build/tcl/tcl${TCLVER}/unix"
 RUN ./configure --prefix="${TCL_HOME}" --enable-64bit \
-    && make -j"$(nproc)" \
-    && make install
+    && LD_LIBRARY_PATH="$(pwd):${LD_LIBRARY_PATH:-}" make -j"$(nproc)" \
+    && LD_LIBRARY_PATH="$(pwd):${LD_LIBRARY_PATH:-}" make install
+
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
@@ -91,7 +91,7 @@ RUN ln -sf "${TCL_HOME}/bin/${TCLSH}" "${TCL_HOME}/bin/tclsh"
 # ===============================
 # Stage 2: Final Image
 # ===============================
-FROM alpine:3.23
+FROM alpine:3.24
 
 # Re-declare args in this stage
 ARG TCL_HOME
@@ -121,7 +121,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 LABEL org.opencontainers.image.title="Alpine Tcl/Tcllib Image" \
     org.opencontainers.image.description="A custom Docker image with Alpine, Tcl ${TCLVER}, and Tcllib 2.0." \
-    org.opencontainers.image.version="1.0.3" \
+    org.opencontainers.image.version="1.0.5" \
     org.opencontainers.image.created=${BUILD_DATE} \
     org.opencontainers.image.revision=${VCS_REF} \
     org.opencontainers.image.authors="admin@cloudz.cv" \

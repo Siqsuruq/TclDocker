@@ -7,7 +7,6 @@ This repository contains three OS variants:
 
 -   Alpine (musl-based minimal image)
 -   Debian (glibc-based stable server image)
--   Ubuntu (glibc-based Ubuntu ecosystem image)
 
 ------------------------------------------------------------------------
 
@@ -29,7 +28,7 @@ Each image compiles and installs:
 -   [Tcl 9.x or Tcl 8.x](https://www.tcl-lang.org/software/tcltk/download.html)
 -   [TclTLS 2.0](https://core.tcl-lang.org/tcltls/home)
 -   [tDOM 0.9.6](https://www.tdom.org/index.html)
--   [NSF (Next Scripting Framework / NX) 2.4.0](https://next-scripting.org/xowiki/)
+-   [NSF (Next Scripting Framework / NX) 2.5.0](https://next-scripting.org/xowiki/)
 -   [tzint 1.3](https://fossil.sowaswie.de/tzint/home)
 -   [Tcllib 2.0](https://core.tcl-lang.org/tcllib/doc/trunk/embedded/md/toc.md)
 
