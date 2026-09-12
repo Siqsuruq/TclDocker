@@ -7,7 +7,7 @@ DOCKERFILE="Dockerfile"     # one Dockerfile for both
 DIST="debian"
 
 # ---- choose what to build ----
-TCLVER="${TCLVER:-9.0.3}"	# e.g. 8.6.17 or 9.0.3
+TCLVER="${TCLVER:-9.0.4}"	# e.g. 8.6.17 or 9.0.4
 TCLMAJOR="${TCLMAJOR:-${TCLVER%%.*}}"
 
 # derive tags

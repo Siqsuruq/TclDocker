@@ -28,8 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # --- Build Tcl  ---
 WORKDIR /build/tcl
 RUN wget -O tcl${TCLVER}-src.tar.gz https://sourceforge.net/projects/tcl/files/Tcl/${TCLVER}/tcl${TCLVER}-src.tar.gz/download && tar -xf tcl${TCLVER}-src.tar.gz
-WORKDIR tcl${TCLVER}/unix
-RUN ./configure --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
+WORKDIR /build/tcl/tcl${TCLVER}/unix
+RUN ./configure --prefix=${TCL_HOME} --enable-64bit && LD_LIBRARY_PATH="$(pwd):${LD_LIBRARY_PATH}" make -j$(nproc) && make install && echo "${TCL_LIB_HOME}" > /etc/ld.so.conf.d/tcl9.conf && ldconfig
+
 
 # --- Build TclTLS 2.0 ---
 WORKDIR /build/tls
@@ -48,10 +49,10 @@ WORKDIR /build/nsf
 RUN git clone https://github.com/nm-wu/nsf.git .
 RUN ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
 
-# --- Build tzint 1.2 ---
+# --- Build tzint 1.3 ---
 WORKDIR /build/tzint
-RUN wget -O tzint-1.2.tar.gz https://github.com/aschoepe/tzint/archive/refs/tags/version-1.2.tar.gz && tar -xf tzint-1.2.tar.gz
-WORKDIR /build/tzint/tzint-version-1.2
+RUN wget -O tzint-1.3.tar.gz https://github.com/aschoepe/tzint/archive/refs/tags/version-1.3.tar.gz && tar -xf tzint-1.3.tar.gz
+WORKDIR /build/tzint/tzint-version-1.3
 RUN ./configure --with-tcl=${TCL_LIB_HOME} --prefix=${TCL_HOME} --enable-64bit && make -j$(nproc) && make install
 
 # --- Install Tcllib 2.0 (The Standard Library) ---
@@ -98,7 +99,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 LABEL org.opencontainers.image.title="Debian Tcl/Tcllib Image" \
 	org.opencontainers.image.description="A custom Docker image with Debian, Tcl ${TCLVER}, and Tcllib 2.0." \
-	org.opencontainers.image.version="1.0.4" \
+	org.opencontainers.image.version="1.0.5" \
 	org.opencontainers.image.created=${BUILD_DATE} \
 	org.opencontainers.image.revision=${VCS_REF} \
 	org.opencontainers.image.authors="admin@cloudz.cv" \

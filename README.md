@@ -30,7 +30,7 @@ Each image compiles and installs:
 -   [TclTLS 2.0](https://core.tcl-lang.org/tcltls/home)
 -   [tDOM 0.9.6](https://www.tdom.org/index.html)
 -   [NSF (Next Scripting Framework / NX) 2.4.0](https://next-scripting.org/xowiki/)
--   [tzint 1.2](https://fossil.sowaswie.de/tzint/home)
+-   [tzint 1.3](https://fossil.sowaswie.de/tzint/home)
 -   [Tcllib 2.0](https://core.tcl-lang.org/tcllib/doc/trunk/embedded/md/toc.md)
 
 ------------------------------------------------------------------------
